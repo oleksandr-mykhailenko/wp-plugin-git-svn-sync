@@ -35,6 +35,14 @@ You can customize this by providing a relative path to your assets directory:
 	--assets-dir="screenshots"
 ```
 
+```bash
+./sync.sh \
+	--plugin-name="mailjet-for-wordpress" \
+	--git-repo="https://github.com/mailjet/wordpress-mailjet-plugin-apiv3" \
+	--svn-user=Mailjet \
+	--assets-dir="assets"
+```
+
 Here the script will push the assets from `your-git-root/screenshots` directory.
 
 Note that the script will also always try to remove the assets-dir from the trunk

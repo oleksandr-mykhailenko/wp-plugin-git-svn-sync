@@ -120,10 +120,10 @@ sync_tag () {
 
 sync_all_tags () {
 	cd "$GIT_DIR" || exit
-
-	for tag in $(git tag); do
-		sync_tag "$tag"
-	done
+  sync_tag "1.8.1"
+	#for tag in $(git tag); do
+	#	sync_tag "$tag"
+	#done
 }
 
 sync_trunk () {
