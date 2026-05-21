@@ -61,13 +61,10 @@ fetch_git_repo() {
 stage_and_commit_changes() {
   local message=$1
 
-  #run after sync files
-  #svn del --force --quiet "$SVN_TRUNK_GIT_DIR"
-
-  #svn revert --recursive .git
+  # Mark files deleted by rsync as deleted in SVN
+  svn status | grep "^!" | awk '{print $2}' | xargs -I {} svn delete --force {}
 
   svn add --force --quiet .
-  #svn add --force --quiet .
 
   #if [ -d "$ASSETS_DIR" ]; then
   #  svn del --force --quiet "$ASSETS_DIR"
@@ -99,7 +96,8 @@ sync_files() {
   local destination=$2/
   local excludeFrom=".git"
   echo "$destination"
-  rsync --compress --recursive --delete --delete-excluded --force --archive --exclude "$excludeFrom" "$source" "$destination"
+  # --checksum compares file contents, not just timestamps, to catch all real changes
+  rsync --compress --recursive --delete --delete-excluded --force --archive --checksum --exclude "$excludeFrom" "$source" "$destination"
 
 }
 
@@ -134,10 +132,10 @@ sync_tag() {
   #svn rm -m 'remove tag' "$SVN_REPO/tags/1.9.5"
   #svn rm -m 'remove tag 1.9.8' "$SVN_REPO/tags/1.9.8"
 
-svn rm -m 'remove tag 1.0.1' "$SVN_REPO/tags/1.0.1"
-svn rm -m 'remove tag v5.5.1' "$SVN_REPO/tags/v5.5.1"
-svn rm -m 'remove tag v5.5.2' "$SVN_REPO/tags/v5.5.2"
-svn rm -m 'remove tag v5.5.3' "$SVN_REPO/tags/v5.5.3"
+#svn rm -m 'remove tag 1.0.1' "$SVN_REPO/tags/1.0.1"
+#svn rm -m 'remove tag v5.5.1' "$SVN_REPO/tags/v5.5.1"
+#svn rm -m 'remove tag v5.5.2' "$SVN_REPO/tags/v5.5.2"
+#svn rm -m 'remove tag v5.5.3' "$SVN_REPO/tags/v5.5.3"
 
 
   #svn commit --username="omykhailenko" -m "Remove old tags"
@@ -195,8 +193,8 @@ svn rm -m 'remove tag v5.5.3' "$SVN_REPO/tags/v5.5.3"
 
 sync_all_tags() {
   cd "$GIT_DIR" || exit
-  sync_tag "v6.0.1" #Mailejt
-  #sync_tag "1.9.9" #Mailgun
+  sync_tag "6.2.2" #Mailejt
+  #sync_tag "2.2.0" #Mailgun
 }
 
 sync_trunk() {
@@ -209,6 +207,10 @@ sync_trunk() {
   sync_files . "$SVN_TRUNK_DIR"
 
   cd "$SVN_TRUNK_DIR" || exit
+
+  # Resolve any SVN conflicts in favor of our (rsync'd) working copy files
+  svn resolve --accept working -R . --quiet 2>/dev/null || true
+
   stage_and_commit_changes "Updating trunk"
 }
 
@@ -232,6 +234,6 @@ fetch_svn_repo
 fetch_git_repo
 sync_assets
 sync_all_tags
-#sync_trunk
+sync_trunk
 
 exit 0
